@@ -85,7 +85,8 @@ class TicketmasterBot:
             return False
         try:
             logger.info("Detected CAPTCHA, attempting to solve...")
-            sitekey = self.driver.find_element(By.CLASS_NAME, "g-recaptcha").get_attribute("data-sitekey")  # Update based on actual element
+            sitekey = self.driver.find_element(By.XPATH, "//div[@class='g-recaptcha']").get_attribute("data-sitekey")
+            self.driver.find_element(By.ID, "recaptcha-submit").click()  # 示例提交按钮
             captcha_result = self.captcha_solver.recaptcha(sitekey=sitekey, url=self.driver.current_url)
             captcha_code = captcha_result['code']
             logger.info(f"CAPTCHA solved successfully: {captcha_code}")
