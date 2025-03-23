@@ -46,18 +46,16 @@ class TicketmasterBot:
     """Check if the current page is a queue page."""
     try:
         wait = WebDriverWait(self.driver, 10)
-        # 检查多种队列标识
         queue_indicators = [
             (By.ID, "queue-it"),
-            (By.CLASS_NAME, "queue-container"),  # 示例Class名
-            (By.XPATH, "//div[contains(text(), 'Waiting Room')]")  # 示例文字
+            (By.CLASS_NAME, "queue-it-container"),  # Queue-it常见Class
+            (By.XPATH, "//div[contains(text(), 'Waiting Room')]")  # 常见文字
         ]
         for locator in queue_indicators:
             wait.until(EC.presence_of_element_located(locator))
             logger.info(f"Detected queue page via {locator}, current URL: {self.driver.current_url}")
             return True
     except:
-        # 额外检查URL是否包含"queue"
         if "queue" in self.driver.current_url.lower():
             logger.info(f"Detected queue via URL: {self.driver.current_url}")
             return True
@@ -66,11 +64,10 @@ class TicketmasterBot:
 
     def bypass_queue(self):
     """Attempt to bypass the queue by navigating to the purchase page."""
-    # 尝试多个可能的购票URL
     possible_urls = [
         self.url + "/buy",
         self.url + "/tickets",
-        self.url.replace("event", "tickets")  # 根据实际URL结构调整
+        self.url.replace("activity/detail", "tickets")  # 适配Ticketmaster.sg的URL结构
     ]
     for bypass_url in possible_urls:
         logger.info(f"Attempting to bypass queue, navigating to: {bypass_url}")
