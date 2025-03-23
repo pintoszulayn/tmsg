@@ -43,40 +43,40 @@ class TicketmasterBot:
         return webdriver.Chrome(options=chrome_options)
 
     def check_queue(self):
-    """Check if the current page is a queue page."""
-    try:
-        wait = WebDriverWait(self.driver, 10)
-        queue_indicators = [
-            (By.ID, "queue-it"),
-            (By.CLASS_NAME, "queue-it-container"),  # Queue-it常见Class
-            (By.XPATH, "//div[contains(text(), 'Waiting Room')]")  # 常见文字
-        ]
-        for locator in queue_indicators:
-            wait.until(EC.presence_of_element_located(locator))
-            logger.info(f"Detected queue page via {locator}, current URL: {self.driver.current_url}")
-            return True
-    except:
-        if "queue" in self.driver.current_url.lower():
-            logger.info(f"Detected queue via URL: {self.driver.current_url}")
-            return True
-        logger.info(f"No queue detected, current URL: {self.driver.current_url}")
-        return False
+        """Check if the current page is a queue page."""
+        try:
+            wait = WebDriverWait(self.driver, 10)
+            queue_indicators = [
+                (By.ID, "queue-it"),
+                (By.CLASS_NAME, "queue-it-container"),
+                (By.XPATH, "//div[contains(text(), 'Waiting Room')]")
+            ]
+            for locator in queue_indicators:
+                wait.until(EC.presence_of_element_located(locator))
+                logger.info(f"Detected queue page via {locator}, current URL: {self.driver.current_url}")
+                return True
+        except:
+            if "queue" in self.driver.current_url.lower():
+                logger.info(f"Detected queue via URL: {self.driver.current_url}")
+                return True
+            logger.info(f"No queue detected, current URL: {self.driver.current_url}")
+            return False
 
     def bypass_queue(self):
-    """Attempt to bypass the queue by navigating to the purchase page."""
-    possible_urls = [
-        self.url + "/buy",
-        self.url + "/tickets",
-        self.url.replace("activity/detail", "tickets")  # 适配Ticketmaster.sg的URL结构
-    ]
-    for bypass_url in possible_urls:
-        logger.info(f"Attempting to bypass queue, navigating to: {bypass_url}")
-        self.driver.get(bypass_url)
-        time.sleep(2)
-        if "queue" not in self.driver.current_url.lower():
-            logger.info(f"Bypass successful, current URL: {self.driver.current_url}")
-            return
-    logger.error("Failed to bypass queue, likely server-side restriction.")
+        """Attempt to bypass the queue by navigating to the purchase page."""
+        possible_urls = [
+            self.url + "/buy",
+            self.url + "/tickets",
+            self.url.replace("activity/detail", "tickets")
+        ]
+        for bypass_url in possible_urls:
+            logger.info(f"Attempting to bypass queue, navigating to: {bypass_url}")
+            self.driver.get(bypass_url)
+            time.sleep(2)
+            if "queue" not in self.driver.current_url.lower():
+                logger.info(f"Bypass successful, current URL: {self.driver.current_url}")
+                return
+        logger.error("Failed to bypass queue, likely server-side restriction.")
 
     def solve_captcha(self):
         """Solve CAPTCHA using 2Captcha service."""
@@ -86,13 +86,12 @@ class TicketmasterBot:
         try:
             logger.info("Detected CAPTCHA, attempting to solve...")
             sitekey = self.driver.find_element(By.XPATH, "//div[@class='g-recaptcha']").get_attribute("data-sitekey")
-            self.driver.find_element(By.ID, "recaptcha-submit").click()  # 示例提交按钮
             captcha_result = self.captcha_solver.recaptcha(sitekey=sitekey, url=self.driver.current_url)
             captcha_code = captcha_result['code']
             logger.info(f"CAPTCHA solved successfully: {captcha_code}")
 
             self.driver.execute_script(f'document.getElementById("g-recaptcha-response").innerHTML="{captcha_code}";')
-            self.driver.find_element(By.ID, "submit_button").click()  # Update based on actual submit button
+            self.driver.find_element(By.ID, "recaptcha-submit").click()
             time.sleep(2)
             return True
         except Exception as e:
@@ -103,7 +102,7 @@ class TicketmasterBot:
         """Select available tickets and add to cart."""
         try:
             wait = WebDriverWait(self.driver, 10)
-            ticket_option = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Add to Cart')]")))  # Update based on actual element
+            ticket_option = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Add to Cart')]")))
             ticket_option.click()
             logger.info("Successfully selected tickets and added to cart.")
             return True
@@ -115,14 +114,14 @@ class TicketmasterBot:
         """Complete the checkout process with payment details."""
         try:
             wait = WebDriverWait(self.driver, 10)
-            checkout_button = wait.until(EC.element_to_be_clickable((By.ID, "checkout-button")))  # Update based on actual element
+            checkout_button = wait.until(EC.element_to_be_clickable((By.ID, "checkout-button")))
             checkout_button.click()
             logger.info("Navigated to checkout page...")
 
-            wait.until(EC.presence_of_element_located((By.ID, "cardNumber"))).send_keys(self.card_number)
-            self.driver.find_element(By.ID, "expiry").send_keys(self.expiry)
-            self.driver.find_element(By.ID, "cvc").send_keys(self.cvc)
-            self.driver.find_element(By.ID, "submit-payment").click()  # Update based on actual submit button
+            wait.until(EC.presence_of_element_located((By.ID, "payment-card-number"))).send_keys(self.card_number)
+            self.driver.find_element(By.ID, "payment-expiry").send_keys(self.expiry)
+            self.driver.find_element(By.ID, "payment-cvc").send_keys(self.cvc)
+            self.driver.find_element(By.ID, "pay-now").click()
             logger.info("Payment details submitted successfully!")
             return True
         except Exception as e:
